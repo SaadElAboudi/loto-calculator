@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loto Calculator</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0e0f12;
+      --surface: #16181e;
+      --surface2: #1e2029;
+      --border: #2a2d38;
+      --accent: #c8f55a;
+      --accent2: #5af5c8;
+      --danger: #f55a5a;
+      --text: #e8eaf0;
+      --muted: #6b6f80;
+      --font-head: 'Syne', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+      --radius: 10px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-mono);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    /* ── GRID NOISE TEXTURE */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200, 245, 90, .03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 245, 90, .03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .page {
+      position: relative;
+      z-index: 1;
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    /* ── HEADER */
+    header {
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-line {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+    }
+
+    .logo-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 12px var(--accent);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 8px var(--accent);
+      }
+
+      50% {
+        box-shadow: 0 0 20px var(--accent);
+      }
+    }
+
+    h1 {
+      font-family: var(--font-head);
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      color: var(--text);
+    }
+
+    h1 span {
+      color: var(--accent);
+    }
+
+    .sub {
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: .08em;
+    }
+
+    /* ── FORM CARD */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-title {
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.2rem;
+    }
+
+    /* ── BALL PICKER */
+    .picker-label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .06em;
+      margin-bottom: 8px;
+    }
+
+    .balls-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+      gap: 6px;
+      margin-bottom: 1.2rem;
+    }
+
+    .ball {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      border: 1.5px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+    }
+
+    .ball:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .ball.selected {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #0e0f12;
+      font-weight: 700;
+      box-shadow: 0 0 10px rgba(200, 245, 90, .4);
+    }
+
+    .ball.chance-ball {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .ball.chance-ball.selected {
+      background: var(--accent2);
+      border-color: var(--accent2);
+      color: #0e0f12;
+      box-shadow: 0 0 10px rgba(90, 245, 200, .4);
+    }
+
+    /* ── SELECTED DISPLAY */
+    .selected-display {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 1.2rem;
+      min-height: 46px;
+    }
+
+    .sel-ball {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--accent);
+      color: #0e0f12;
+    }
+
+    .sel-ball.chance {
+      background: var(--accent2);
+      font-size: 11px;
+    }
+
+    .sel-ball.empty {
+      background: transparent;
+      border: 1.5px dashed var(--border);
+      color: var(--muted);
+      font-size: 18px;
+      font-weight: 300;
+    }
+
+    /* ── FORM GRID */
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 1rem;
+    }
+
+    @media(max-width:540px) {
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    label {
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: .06em;
+      display: block;
+      margin-bottom: 6px;
+    }
+
+    input[type="date"],
+    input[type="number"] {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 9px 12px;
+      outline: none;
+      transition: border-color .15s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+    }
+
+    input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(.5);
+      cursor: pointer;
+    }
+
+    .days-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 1rem;
+    }
+
+    .day-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      background: var(--surface2);
+      font-size: 12px;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .day-pill:hover {
+      border-color: var(--accent);
+    }
+
+    .day-pill input {
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ── TOGGLE */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      cursor: pointer;
+      margin-bottom: 1rem;
+      user-select: none;
+    }
+
+    .toggle-row:hover {
+      border-color: var(--border);
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      flex-shrink: 0;
+    }
+
+    .toggle input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: var(--border);
+      border-radius: 20px;
+      transition: background .2s;
+    }
+
+    .toggle input:checked+.toggle-track {
+      background: var(--accent2);
+    }
+
+    .toggle-thumb {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--text);
+      transition: transform .2s;
+    }
+
+    .toggle input:checked~.toggle-thumb {
+      transform: translateX(16px);
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      flex: 1;
+    }
+
+    .toggle-badge {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(90, 245, 200, .15);
+      color: var(--accent2);
+      letter-spacing: .04em;
+    }
+
+    /* ── BUTTON */
+    .btn {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #0e0f12;
+      font-family: var(--font-head);
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: .04em;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .btn:hover {
+      background: #d8ff6a;
+      box-shadow: 0 0 20px rgba(200, 245, 90, .3);
+    }
+
+    .btn:active {
+      transform: scale(.98);
+    }
+
+    .btn:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+    }
+
+    .btn .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0, 0, 0, .2);
+      border-top-color: #0e0f12;
+      border-radius: 50%;
+      animation: spin .6s linear infinite;
+      vertical-align: -2px;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── ERROR */
+    .error-box {
+      background: rgba(245, 90, 90, .1);
+      border: 1px solid rgba(245, 90, 90, .3);
+      border-radius: var(--radius);
+      padding: 12px 16px;
+      font-size: 13px;
+      color: var(--danger);
+      margin-bottom: 1.2rem;
+      display: none;
+    }
+
+    /* ── RÉSULTATS */
+    #results {
+      display: none;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      gap: 10px;
+      margin-bottom: 1.5rem;
+    }
+
+    .stat {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+    }
+
+    .stat-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stat-val {
+      font-family: var(--font-head);
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .stat-val.green {
+      color: var(--accent);
+    }
+
+    .stat-val.red {
+      color: var(--danger);
+    }
+
+    .stat-val.neutral {
+      color: var(--text);
+    }
+
+    /* ── TIRAGES TABLE */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th {
+      text-align: left;
+      padding: 8px 10px;
+      font-size: 10px;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 7px 10px;
+      border-bottom: 1px solid rgba(42, 45, 56, .6);
+      vertical-align: middle;
+    }
+
+    tr.win td {
+      background: rgba(200, 245, 90, .04);
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .num-row {
+      display: flex;
+      gap: 3px;
+      flex-wrap: nowrap;
+    }
+
+    .n {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 500;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      flex-shrink: 0;
+    }
+
+    .n.hit {
+      background: var(--accent);
+      color: #0e0f12;
+      border-color: var(--accent);
+      font-weight: 700;
+    }
+
+    .n.chance {
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    .n.chance.hit {
+      background: var(--accent2);
+      color: #0e0f12;
+      border-color: var(--accent2);
+    }
+
+    .badge-rank {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: rgba(200, 245, 90, .12);
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .badge-rank.r2t {
+      background: rgba(90, 245, 200, .12);
+      color: var(--accent2);
+    }
+
+    .badge-none {
+      color: var(--muted);
+      font-size: 11px;
+    }
+
+    .gain-val {
+      color: var(--accent);
+      font-weight: 500;
+    }
+
+    .jackpot-val {
+      color: #ffd700;
+      font-weight: 700;
+      letter-spacing: .04em;
+    }
+
+    .section-title {
+      font-family: var(--font-head);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 12px;
+      margin-top: 0;
+    }
+
+    .disclaimer {
+      font-size: 11px;
+      color: var(--muted);
+      padding: 10px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-top: 1rem;
+      line-height: 1.6;
+    }
+
+    .disclaimer strong {
+      color: var(--text);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- HEADER -->
+    <header>
+      <div class="logo-line">
+        <div class="logo-dot"></div>
+        <h1>LOTO <span>CALC</span></h1>
+      </div>
+      <p class="sub">Calculateur de gains · FDJ Loto · Tirages Lundi / Mercredi / Samedi</p>
+    </header>
+
+    <!-- FORM CARD -->
+    <div class="card">
+      <div class="card-title">Tes numéros</div>
+
+      <p class="picker-label">5 NUMÉROS PRINCIPAUX (1–49)</p>
+      <div class="balls-grid" id="balls-main"></div>
+
+      <p class="picker-label">NUMÉRO CHANCE (1–10)</p>
+      <div class="balls-grid" id="balls-chance"></div>
+
+      <div class="selected-display" id="selected-display">
+        <span id="sel-placeholder" style="font-size:12px;color:var(--muted)">Sélectionne 5 numéros + 1 Chance</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Paramètres</div>
+
+      <div class="form-row">
+        <div>
+          <label>DATE DE DÉBUT</label>
+          <input type="date" id="date-debut" value="2025-02-01">
+        </div>
+        <div>
+          <label>DATE DE FIN</label>
+          <input type="date" id="date-fin" value="2026-01-31">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label>NOMBRE DE JOUEURS (partage des gains)</label>
+          <input type="number" id="nb-joueurs" value="1" min="1" max="100">
+        </div>
+      </div>
+
+      <label>JOURS DE TIRAGE À INCLURE</label>
+      <div class="days-row" id="days-row">
+        <label class="day-pill" for="jour-lundi">
+          <input type="checkbox" id="jour-lundi" value="LUNDI">
+          Lundi
+        </label>
+        <label class="day-pill" for="jour-mercredi">
+          <input type="checkbox" id="jour-mercredi" value="MERCREDI">
+          Mercredi
+        </label>
+        <label class="day-pill" for="jour-samedi">
+          <input type="checkbox" id="jour-samedi" value="SAMEDI" checked>
+          Samedi
+        </label>
+      </div>
+
+      <label class="toggle-row" for="toggle-2t">
+        <div class="toggle">
+          <input type="checkbox" id="toggle-2t" checked>
+          <div class="toggle-track"></div>
+          <div class="toggle-thumb"></div>
+        </div>
+        <span class="toggle-label">Option 2nd tirage activée</span>
+        <span class="toggle-badge">+ 0,80 € / grille</span>
+      </label>
+
+      <div class="error-box" id="error-box"></div>
+
+      <button class="btn" id="btn-calc" onclick="calculer()">
+        Calculer mes gains
+      </button>
+    </div>
+
+    <!-- RÉSULTATS -->
+    <div id="results">
+      <div class="card">
+        <div class="section-title">Résumé</div>
+        <div class="stat-grid" id="stat-grid"></div>
+      </div>
+
+      <div class="card">
+        <div class="section-title">Détail des tirages</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Jour</th>
+                <th>1er tirage</th>
+                <th>Rang 1T</th>
+                <th>Gain 1T</th>
+                <th id="th-2t">2nd tirage</th>
+                <th id="th-r2t">Rang 2T</th>
+                <th>Gain total</th>
+                <th id="th-part" style="display:none">Part / joueur</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+        <p class="disclaimer">
+          <strong>⚠️ Gains indicatifs.</strong> Les montants affichés sont des moyennes basées sur les rapports FDJ
+          historiques.
+          Les gains réels varient selon le nombre de gagnants à chaque tirage. Vérifiez vos tickets sur
+          <strong>fdj.fr</strong>.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    const API = "http://localhost:8000";
+
+    // ── ÉTAT
+    const state = { nums: new Set(), chance: null };
+
+    // ── GÉNÉRATION DES BOULES
+    function buildBalls() {
+      const mainGrid = document.getElementById("balls-main");
+      for (let i = 1; i <= 49; i++) {
+        const b = document.createElement("div");
+        b.className = "ball";
+        b.textContent = i;
+        b.dataset.n = i;
+        b.onclick = () => toggleMain(i, b);
+        mainGrid.appendChild(b);
+      }
+
+      const chanceGrid = document.getElementById("balls-chance");
+      for (let i = 1; i <= 10; i++) {
+        const b = document.createElement("div");
+        b.className = "ball chance-ball";
+        b.textContent = i;
+        b.dataset.n = i;
+        b.onclick = () => toggleChance(i, b);
+        chanceGrid.appendChild(b);
+      }
+    }
+
+    function toggleMain(n, el) {
+      if (state.nums.has(n)) {
+        state.nums.delete(n);
+        el.classList.remove("selected");
+      } else {
+        if (state.nums.size >= 5) return;
+        state.nums.add(n);
+        el.classList.add("selected");
+      }
+      updateDisplay();
+    }
+
+    function toggleChance(n, el) {
+      if (state.chance === n) {
+        state.chance = null;
+        el.classList.remove("selected");
+      } else {
+        document.querySelectorAll("#balls-chance .ball").forEach(b => b.classList.remove("selected"));
+        state.chance = n;
+        el.classList.add("selected");
+      }
+      updateDisplay();
+    }
+
+    function updateDisplay() {
+      const d = document.getElementById("selected-display");
+      const p = document.getElementById("sel-placeholder");
+      d.innerHTML = "";
+
+      const sorted = [...state.nums].sort((a, b) => a - b);
+
+      // 5 slots numéros
+      for (let i = 0; i < 5; i++) {
+        const s = document.createElement("span");
+        if (sorted[i] !== undefined) {
+          s.className = "sel-ball";
+          s.textContent = sorted[i];
+        } else {
+          s.className = "sel-ball empty";
+          s.textContent = "+";
+        }
+        d.appendChild(s);
+      }
+
+      // séparateur
+      const sep = document.createElement("span");
+      sep.style.cssText = "font-size:16px;color:var(--muted);margin:0 2px";
+      sep.textContent = "+";
+      d.appendChild(sep);
+
+      // chance
+      const cs = document.createElement("span");
+      if (state.chance) {
+        cs.className = "sel-ball chance";
+        cs.textContent = state.chance;
+      } else {
+        cs.className = "sel-ball empty chance";
+        cs.textContent = "C";
+        cs.style.borderColor = "var(--accent2)";
+        cs.style.color = "var(--accent2)";
+      }
+      d.appendChild(cs);
+    }
+
+    // ── CALCUL
+    async function calculer() {
+      const btn = document.getElementById("btn-calc");
+      const errBox = document.getElementById("error-box");
+      errBox.style.display = "none";
+
+      if (state.nums.size !== 5) return showError("Sélectionne exactement 5 numéros.");
+      if (!state.chance) return showError("Sélectionne le numéro Chance.");
+
+      const debut = document.getElementById("date-debut").value;
+      const fin = document.getElementById("date-fin").value;
+      if (!debut || !fin) return showError("Renseigne les deux dates.");
+
+      const nbJoueurs = parseInt(document.getElementById("nb-joueurs").value) || 1;
+      const second = document.getElementById("toggle-2t").checked;
+      const joursTirage = getSelectedDays();
+      if (joursTirage.length === 0) return showError("Sélectionne au moins un jour de tirage.");
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Calcul en cours…';
+
+      const payload = {
+        numeros: [...state.nums].sort((a, b) => a - b),
+        chance: state.chance,
+        date_debut: debut.split("-").reverse().join("/"),
+        date_fin: fin.split("-").reverse().join("/"),
+        second_tirage: second,
+        nb_joueurs: nbJoueurs,
+        jours_tirage: joursTirage,
+      };
+
+      try {
+        const res = await fetch(`${API}/calculer`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Erreur serveur");
+        }
+        const data = await res.json();
+        renderResults(data, second, nbJoueurs);
+      } catch (e) {
+        showError(e.message.includes("fetch") ? "Impossible de joindre le serveur. Vérifie que le backend tourne sur localhost:8000." : e.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = "Calculer mes gains";
+      }
+    }
+
+    function getSelectedDays() {
+      return [...document.querySelectorAll("#days-row input[type='checkbox']:checked")]
+        .map(el => el.value);
+    }
+
+    function showError(msg) {
+      const e = document.getElementById("error-box");
+      e.textContent = "⚠ " + msg;
+      e.style.display = "block";
+    }
+
+    function renderResults(data, second, nbJoueurs) {
+      const r = data.resume;
+
+      // Stats
+      const sg = document.getElementById("stat-grid");
+      const soldeColor = r.solde_par_joueur >= 0 ? "green" : "red";
+      const soldeSign = r.solde_par_joueur >= 0 ? "+" : "";
+      sg.innerHTML = `
+    <div class="stat"><div class="stat-lbl">Tirages joués</div><div class="stat-val neutral">${r.nb_tirages}</div></div>
+    <div class="stat"><div class="stat-lbl">Mise / joueur</div><div class="stat-val red">− ${r.mise_par_joueur.toFixed(2)} €</div></div>
+    <div class="stat"><div class="stat-lbl">Tirages gagnants</div><div class="stat-val green">${r.nb_gagnants}</div></div>
+    <div class="stat"><div class="stat-lbl">Taux de gain</div><div class="stat-val neutral">${r.taux_gain_pct} %</div></div>
+    <div class="stat"><div class="stat-lbl">Gains totaux (estimés)</div><div class="stat-val green">+ ${r.total_gains.toFixed(2)} €</div></div>
+    ${nbJoueurs > 1 ? `<div class="stat"><div class="stat-lbl">Gains / joueur</div><div class="stat-val green">+ ${r.gains_par_joueur.toFixed(2)} €</div></div>` : ""}
+    <div class="stat"><div class="stat-lbl">Solde net${nbJoueurs > 1 ? " / joueur" : ""}</div><div class="stat-val ${soldeColor}">${soldeSign}${r.solde_par_joueur.toFixed(2)} €</div></div>
+  `;
+
+      // Colonnes 2nd tirage
+      document.getElementById("th-2t").style.display = second ? "" : "none";
+      document.getElementById("th-r2t").style.display = second ? "" : "none";
+      document.getElementById("th-part").style.display = nbJoueurs > 1 ? "" : "none";
+
+      // Tableau
+      const tbody = document.getElementById("tbody");
+      tbody.innerHTML = "";
+
+      data.tirages.forEach(t => {
+        const tr = document.createElement("tr");
+        if (t.has_gain) tr.classList.add("win");
+
+        const nums1 = numsHtml(t.tirage_1.numeros, t.tirage_1.hits, t.tirage_1.chance, t.tirage_1.chance_hit);
+        const rank1 = t.tirage_1.rank
+          ? `<span class="badge-rank">${t.tirage_1.jackpot ? "🏆 JACKPOT" : "Rang " + t.tirage_1.rank}</span>`
+          : `<span class="badge-none">–</span>`;
+        const gain1 = t.tirage_1.jackpot
+          ? `<span class="jackpot-val">JACKPOT !</span>`
+          : t.tirage_1.gain
+            ? `<span class="gain-val">${t.tirage_1.gain.toFixed(2)} €</span>`
+            : `<span class="badge-none">–</span>`;
+
+        let cells2 = second ? `
+      <td style="display:${second ? '' : 'none'}">${t.tirage_2?.numeros ? numsHtml(t.tirage_2.numeros, t.tirage_2.hits) : '<span class="badge-none">–</span>'}</td>
+      <td style="display:${second ? '' : 'none'}">${t.tirage_2?.rank ? `<span class="badge-rank r2t">${t.tirage_2.rank}</span>` : '<span class="badge-none">–</span>'}</td>
+    ` : '<td style="display:none"></td><td style="display:none"></td>';
+
+        const gainTotal = t.gain_total_tirage > 0
+          ? `<span class="gain-val">${t.gain_total_tirage.toFixed(2)} €</span>`
+          : `<span class="badge-none">–</span>`;
+
+        const partCell = nbJoueurs > 1
+          ? `<td>${t.gain_par_joueur > 0 ? `<span class="gain-val">${t.gain_par_joueur.toFixed(2)} €</span>` : '<span class="badge-none">–</span>'}</td>`
+          : `<td style="display:none"></td>`;
+
+        tr.innerHTML = `
+      <td style="white-space:nowrap;font-weight:${t.has_gain ? 600 : 400}">${t.date}</td>
+      <td style="white-space:nowrap">${t.jour || "-"}</td>
+      <td>${nums1}</td>
+      <td>${rank1}</td>
+      <td>${gain1}</td>
+      ${cells2}
+      <td>${gainTotal}</td>
+      ${partCell}
+    `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("results").style.display = "block";
+      document.getElementById("results").scrollIntoView({ behavior: "smooth" });
+    }
+
+    function numsHtml(nums, hits, chance, chanceHit) {
+      const myNums = [...document.querySelectorAll("#balls-main .ball.selected")].map(b => parseInt(b.dataset.n));
+      let html = '<div class="num-row">';
+      nums.forEach(n => {
+        const hit = myNums.includes(n);
+        html += `<span class="n${hit ? " hit" : ""}">${n}</span>`;
+      });
+      if (chance !== undefined) {
+        html += `<span class="n chance${chanceHit ? " hit" : ""}">${chance}</span>`;
+      }
+      return html + "</div>";
+    }
+
+    // ── INIT
+    buildBalls();
+    updateDisplay();
+  </script>
+</body>
+
+</html>
