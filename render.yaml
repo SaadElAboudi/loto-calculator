@@ -7,3 +7,12 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11
+
+  - type: web
+    name: loto-calculator-frontend
+    env: python
+    buildCommand: echo "Frontend ready"
+    startCommand: cd frontend && python -m http.server $PORT
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11
